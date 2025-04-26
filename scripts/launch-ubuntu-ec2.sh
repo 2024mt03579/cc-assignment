@@ -14,9 +14,15 @@ if [ -z "$VM_NAME" ] || [ -z "$INSTANCE_TYPE" ]; then
   exit 1
 fi
 
+if [ ! -f .runner-config ]; then
+  echo "Create VPC using the script $0/create-vpc-structure.sh before proceeding"
+  exit 1
+fi
+
 # --- Configuration ---
 KEY_NAME="bits-key"
-SECURITY_GROUP_NAME="${VM_NAME}-sg"
+SECURITY_GROUP_ID=$(cat .runner-config | grep sg | awk -F "=" '{print $2}')
+SUBNET_ID=$(cat .runner-config | grep subnet | awk -F "=" '{print $2}')
 
 # --- 1. Get Latest Ubuntu 22.04 AMI ID ---
 echo "Fetching latest Ubuntu 22.04 LTS AMI ID..."
@@ -30,31 +36,6 @@ AMI_ID=$(aws ec2 describe-images \
 
 echo "Found AMI ID: $AMI_ID"
 
-# --- 2. Create Key Pair ---
-#echo "Creating key pair: $KEY_NAME..."
-#aws ec2 create-key-pair \
-#  --key-name "$KEY_NAME" \
-#  --query 'KeyMaterial' \
-#  --output text > "${KEY_NAME}.pem"
-
-#chmod 400 "${KEY_NAME}.pem"
-
-# --- 3. Create Security Group ---
-echo "Creating security group: $SECURITY_GROUP_NAME..."
-SG_ID=$(aws ec2 create-security-group \
-  --group-name "$SECURITY_GROUP_NAME" \
-  --description "Security group for $VM_NAME" \
-  --query 'GroupId' \
-  --region $REGION \
-  --output text)
-
-echo "Security Group ID: $SG_ID"
-
-# --- 4. Authorize Inbound Rules (SSH, HTTP, HTTPS) ---
-aws ec2 authorize-security-group-ingress --group-id "$SG_ID" --protocol tcp --port 22 --cidr 0.0.0.0/0 --region $REGION
-aws ec2 authorize-security-group-ingress --group-id "$SG_ID" --protocol tcp --port 80 --cidr 0.0.0.0/0 --region $REGION
-aws ec2 authorize-security-group-ingress --group-id "$SG_ID" --protocol tcp --port 443 --cidr 0.0.0.0/0 --region $REGION
-
 # --- 5. Launch EC2 Instance ---
 echo "Launching EC2 instance..."
 INSTANCE_ID=$(aws ec2 run-instances \
@@ -63,7 +44,8 @@ INSTANCE_ID=$(aws ec2 run-instances \
   --instance-type "$INSTANCE_TYPE" \
   --region $REGION \
   --key-name "$KEY_NAME" \
-  --security-group-ids "$SG_ID" \
+  --subnet-id "$SUBNET_ID" \
+  --security-group-ids "$SECURITY_GROUP_ID" \
   --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$VM_NAME}]" \
   --query 'Instances[0].InstanceId' \
   --output text)

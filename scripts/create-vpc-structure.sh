@@ -115,9 +115,14 @@ echo "Security Group Created: $SG_ID ($SECURITY_GROUP_NAME)"
 # --- Done ---
 echo ""
 echo "Resources Created Successfully!"
-echo "VPC ID:           $VPC_ID"
+echo "VPC ID:           $VPC_ID "
 echo "Subnet ID:        $SUBNET_ID"
 echo "Internet Gateway: $IGW_ID"
 echo "Route Table ID:   $ROUTE_TABLE_ID"
 echo "Security Group:   $SG_ID"
 
+cat <<EOF > .runner-config
+vpc=$VPC_ID
+subnet=$SUBNET_ID
+sg=$SG_ID
+EOF

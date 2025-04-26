@@ -4,8 +4,10 @@ set -e
 # === CONFIGURABLE PARAMETERS ===
 VM_NAME="as-web-app"
 INSTANCE_TYPE="t2.micro"
-KEY_NAME="${VM_NAME}-key"
-SECURITY_GROUP_NAME="${VM_NAME}-sg"
+KEY_NAME="bits-key"
+VPC_ID=$(cat .runner-config | grep vpc | awk -F "=" '{print $2}')
+SECURITY_GROUP_ID=$(cat .runner-config | grep sg | awk -F "=" '{print $2}')
+SUBNET_ID=$(cat .runner-config | grep subnet | awk -F "=" '{print $2}')
 LAUNCH_TEMPLATE_NAME="${VM_NAME}-lt"
 ASG_NAME="${VM_NAME}-asg"
 TARGET_GROUP_NAME="${VM_NAME}-tg"
@@ -25,47 +27,6 @@ AMI_ID=$(aws ec2 describe-images \
   --output text)
 echo "Using AMI ID: $AMI_ID"
 
-# --- 2. Get Default VPC ID ---
-echo "Fetching default VPC ID..."
-VPC_ID=$(aws ec2 describe-vpcs \
-  --filters Name=isDefault,Values=true \
-  --region "$REGION" \
-  --query "Vpcs[0].VpcId" \
-  --output text)
-echo "Default VPC ID: $VPC_ID"
-
-# --- 3. Get Subnets in Default VPC ---
-echo "Fetching Subnets for Default VPC..."
-SUBNET_IDS=$(aws ec2 describe-subnets \
-  --filters Name=vpc-id,Values="$VPC_ID" \
-  --region "$REGION" \
-  --query "Subnets[*].SubnetId" \
-  --output text)
-echo "Subnet IDs: $SUBNET_IDS"
-
-# --- 4. Create Key Pair ---
-echo "Creating Key Pair..."
-aws ec2 create-key-pair \
-  --key-name "$KEY_NAME" \
-  --query 'KeyMaterial' \
-  --region "$REGION" \
-  --output text > "${KEY_NAME}.pem"
-chmod 400 "${KEY_NAME}.pem"
-
-# --- 5. Create Security Group ---
-echo "Creating Security Group..."
-SG_ID=$(aws ec2 create-security-group \
-  --group-name "$SECURITY_GROUP_NAME" \
-  --description "Allow SSH, HTTP, HTTPS" \
-  --vpc-id "$VPC_ID" \
-  --region "$REGION" \
-  --output text)
-
-# Allow SSH, HTTP, HTTPS
-aws ec2 authorize-security-group-ingress --group-id "$SG_ID" --protocol tcp --port 22 --cidr 0.0.0.0/0 --region "$REGION"
-aws ec2 authorize-security-group-ingress --group-id "$SG_ID" --protocol tcp --port 80 --cidr 0.0.0.0/0 --region "$REGION"
-aws ec2 authorize-security-group-ingress --group-id "$SG_ID" --protocol tcp --port 443 --cidr 0.0.0.0/0 --region "$REGION"
-
 # --- 6. Fetch User-Data from GitHub ---
 echo "Fetching User Data from GitHub..."
 curl -s https://raw.githubusercontent.com/2024mt03579/cc-assignment/main/scripts/auto-scaling-template.sh -o user-data.sh
@@ -80,7 +41,7 @@ aws ec2 create-launch-template \
     \"ImageId\":\"$AMI_ID\",
     \"InstanceType\":\"$INSTANCE_TYPE\",
     \"KeyName\":\"$KEY_NAME\",
-    \"SecurityGroupIds\":[\"$SG_ID\"],
+    \"SecurityGroupIds\":[\"$SECURITY_GROUP_ID\"],
     \"UserData\":\"$USER_DATA_BASE64\"
   }" \
   --region "$REGION"
@@ -102,7 +63,7 @@ echo "Creating Network Load Balancer..."
 NLB_ARN=$(aws elbv2 create-load-balancer \
   --name "$NLB_NAME" \
   --type network \
-  --subnets $SUBNET_IDS \
+  --subnets $SUBNET_ID \
   --region "$REGION" \
   --query 'LoadBalancers[0].LoadBalancerArn' \
   --output text)
@@ -124,7 +85,7 @@ aws autoscaling create-auto-scaling-group \
   --min-size 1 \
   --max-size 3 \
   --desired-capacity 1 \
-  --vpc-zone-identifier "$(echo $SUBNET_IDS | tr ' ' ',')" \
+  --vpc-zone-identifier "$(echo $SUBNET_ID | tr ' ' ',')" \
   --target-group-arns "$TARGET_GROUP_ARN" \
   --region "$REGION"
 
