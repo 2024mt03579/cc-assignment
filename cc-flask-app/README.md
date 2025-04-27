@@ -1,6 +1,6 @@
 # Flask Application with MySQL on Docker
 
-This is a simple Flask application that allows users to submit contact forms and stores their data in a MySQL database. The database is hosted inside a Docker container.
+This is a simple Flask application that allows users to submit contact forms and stores their data in a MySQL database.
 
 ## Features
 - **Contact Form**: Users can submit their name, email, and message through a contact form.
