@@ -9,7 +9,9 @@ This is a simple Flask application that allows users to submit contact forms and
 - **MySQL**: MySQL is run in a Docker container for local development or hosted using AWS RDS.
 
 ## Requirements
-- **Python 3.11+**
+- **Python 3.12**
+- **venv (sudo apt install python3.12-venv)**
+- **Nginx** (sudo apt install nginx)
 - **Docker** (for MySQL container if using)
 
 ## Setup Instructions
@@ -80,3 +82,36 @@ Expected output with gunicorn
 ```
 
 **NOTE: The `gunicorn` is not compatible with windows**
+
+## Nginx setup to serve traffic directly over HTTP port
+- Make sure nginx is install
+`sudo apt install nginx`
+- Create nginx config
+`sudo vim /etc/nginx/sites-available/myflaskapp`
+- Add the bellow content
+```bash
+server {
+    listen 80 default_server;
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+- Link the config
+`sudo ln -s /etc/nginx/sites-available/myflaskapp /etc/nginx/sites-enabled/`
+- Validate the config
+`sudo nginx -t`
+- Start nginx if no issues in config
+`sudo systemctl restart nginx`
+- If there's an error like `a duplicate default server` then remove the default site by running
+`sudo rm /etc/nginx/sites-enabled/default` and restart nginx service again
+- 
+With this, you can directly access the application on default http port using just fqdn also via NLB
+e.g. http://ec2-18-212-57-31.compute-1.amazonaws.com/
+or http://flask-nlb-f47755032f18a14a.elb.us-east-1.amazonaws.com/
+
+**NOTE: This is not the most secure way but just for learning purpose**
