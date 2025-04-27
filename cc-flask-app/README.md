@@ -61,6 +61,7 @@ Press CTRL+C to quit
 
 ## Production setup
 Setup the following env vars 
+
 ```bash
 export DB_HOST=<aws_rds_endpoint>
 export DB_USER=<username>
@@ -68,6 +69,7 @@ export DB_PASSWORD=<password>
 export DB_NAME=<db_name_created_during_rds_setup>
 export SECRET_KEY=<some_secret_for_session_mgmt>
 ```
+**Make sure that the instance has a database created**
 On the linux instance, either `python app.py` can be used or for more production like setup run
 
 `gunicorn --bind 0.0.0.0:8000 app:app`
