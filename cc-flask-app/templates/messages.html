@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Contact Messages</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header>
+    <h1>Contact Messages</h1>
+  </header>
+
+  <section id="messages">
+    {% if contacts %}
+      <ul>
+        {% for contact in contacts %}
+          <li>
+            <strong>{{ contact.name }}</strong> ({{ contact.email }}) said:<br>
+            "{{ contact.message }}"
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No messages yet!</p>
+    {% endif %}
+  </section>
+
+  <footer>
+    <p>© 2025 CloudApp Inc.</p>
+  </footer>
+</body>
+</html>
