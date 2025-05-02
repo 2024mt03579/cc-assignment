@@ -7,12 +7,19 @@ INSTANCE_TYPE="t2.micro"
 KEY_NAME="bits-key"
 VPC_ID=$(cat .runner-config | grep vpc | awk -F "=" '{print $2}')
 SECURITY_GROUP_ID=$(cat .runner-config | grep sg | awk -F "=" '{print $2}')
-SUBNET_ID=$(cat .runner-config | grep subnet | awk -F "=" '{print $2}')
+SUBNET_ID=$(cat .runner-config | grep subnet1 | awk -F "=" '{print $2}')
 LAUNCH_TEMPLATE_NAME="${VM_NAME}-lt"
 ASG_NAME="${VM_NAME}-asg"
 TARGET_GROUP_NAME="${VM_NAME}-tg"
 NLB_NAME="${VM_NAME}-nlb"
 REGION="us-east-1"
+
+# === READ RDS CONFIG TO PASS TO LAUNCH TEMPLATE ===
+export DB_ENDPOINT=$(cat .db-config | grep db_endpoint | awk -F "=" '{print $2}')
+export DB_PORT=$(cat .db-config | grep db_port | awk -F "=" '{print $2}')
+export DB_NAME=$(cat .db-config | grep db_name | awk -F "=" '{print $2}')
+export DB_USER=$(cat .db-config | grep db_user | awk -F "=" '{print $2}')
+export DB_PASSWORD=$(cat .db-config | grep db_password | awk -F "=" '{print $2}')
 
 # === END OF CONFIGURATION ===
 
@@ -29,7 +36,8 @@ echo "Using AMI ID: $AMI_ID"
 
 # --- 6. Fetch User-Data from GitHub ---
 echo "Fetching User Data from GitHub..."
-curl -s https://raw.githubusercontent.com/2024mt03579/cc-assignment/main/scripts/auto-scaling-template.sh -o user-data.sh
+curl -s https://raw.githubusercontent.com/2024mt03579/cc-assignment/main/scripts/templates/auto-scaling-template.sh -o user-data.template.sh
+envsubst < user-data.template.sh > user-data.sh
 USER_DATA_BASE64=$(base64 -w 0 user-data.sh)
 
 # --- 7. Create Launch Template ---

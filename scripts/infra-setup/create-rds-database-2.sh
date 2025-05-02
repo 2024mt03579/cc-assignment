@@ -1,20 +1,26 @@
 #!/bin/bash
 
-# Variables (edit as needed)
-DB_INSTANCE_IDENTIFIER="cc-assignment-db"
+# Variables
+DB_INSTANCE_IDENTIFIER="cc-assignment-rds"
 DB_NAME="${1}"
 DB_USER="${2}"
-DB_PASSWORD="${3}"     # Ensure it meets RDS password policy
+#Looking for DB_PASSWORD in the environment variable
+if [ -z $DB_PASSWORD ];then
+  echo "export DB_PASSWORD variable before running the script"
+  exit 1
+fi
 DB_INSTANCE_CLASS="db.t3.micro"
 DB_ENGINE="mysql"
 DB_ENGINE_VERSION="8.0.35"
 ALLOCATED_STORAGE=20                 # in GB
-REGION="${4}"
+REGION="${3}"
 VPC_SECURITY_GROUP_ID=$(cat .runner-config | grep sg | awk -F "=" '{print $2}')
-SUBNET_GROUP_NAME=$(cat .runner-config | grep subnet | awk -F "=" '{print $2}')
+SUBNET_GROUP_NAME=$(cat .runner-config | grep db_subnet_group | awk -F "=" '{print $2}')
 
 if [ $# -lt 4 ];then
-  echo "usage: $0 <db-name> <db-user> <db-password> <db-region>"
+  echo "usage: $0 <db-name> <db-user> <db-region>"
+  exit 1
+fi
 
 # Create the RDS instance
 aws rds create-db-instance \
@@ -31,14 +37,43 @@ aws rds create-db-instance \
   --publicly-accessible \
   --region $REGION
 
-# Wait for DB to be available (optional)
+# Wait for DB to be available
 echo "Waiting for RDS instance to become available..."
-aws rds wait db-instance-available --db-instance-identifier $DB_INSTANCE_IDENTIFIER --region $REGION
+aws rds wait db-instance-available \
+  --db-instance-identifier $DB_INSTANCE_IDENTIFIER \
+  --region $REGION
 
-# Fetch endpoint
-echo "RDS MySQL instance created. Endpoint details:"
-aws rds describe-db-instances \
+# Fetch DB endpoint and port
+DB_ENDPOINT=$(aws rds describe-db-instances \
   --db-instance-identifier $DB_INSTANCE_IDENTIFIER \
   --region $REGION \
   --query 'DBInstances[0].Endpoint.Address' \
-  --output text
+  --output text)
+
+DB_PORT=$(aws rds describe-db-instances \
+  --db-instance-identifier $DB_INSTANCE_IDENTIFIER \
+  --region $REGION \
+  --query 'DBInstances[0].Endpoint.Port' \
+  --output text)
+
+# Print connection info
+echo ""
+echo "RDS MySQL instance created successfully!"
+echo "------------------------------------------"
+echo "DB Endpoint:     $DB_ENDPOINT"
+echo "DB Port:         $DB_PORT"
+echo "DB Name:         $DB_NAME"
+echo "DB User:         $DB_USER"
+echo ""
+echo "JDBC-style URL:"
+echo "jdbc:mysql://$DB_ENDPOINT:$DB_PORT/$DB_NAME"
+echo "------------------------------------------"
+
+
+cat <<EOF > .db-config
+db_endpoint=$DB_ENDPOINT
+db_port=$DB_PORT
+db_name=$DB_NAME
+db_user=$DB_USER
+db_password=$DB_PASSWORD
+EOF
