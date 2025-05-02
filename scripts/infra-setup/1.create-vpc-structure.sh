@@ -18,7 +18,7 @@ REGION="us-east-1"
 VPC_CIDR="10.0.0.0/16"
 SUBNET_CIDR="10.0.1.0/24"
 
-echo "🚀 Starting creation with:"
+echo "Starting creation with:"
 echo "VPC Name: $VPC_NAME"
 echo "Subnet Name: $SUBNET_NAME"
 echo "Security Group Name: $SECURITY_GROUP_NAME"
@@ -109,6 +109,8 @@ aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port
 aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 80 --cidr 0.0.0.0/0 --region $REGION
 # Allow HTTPS
 aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 443 --cidr 0.0.0.0/0 --region $REGION
+# Allow MYSQL Port
+aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 3306 --cidr 0.0.0.0/0 --region $REGION
 
 echo "Security Group Created: $SG_ID ($SECURITY_GROUP_NAME)"
 
