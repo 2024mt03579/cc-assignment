@@ -93,9 +93,10 @@ This will:
 
 ---
 
-## 5️⃣ Static Content in S3 Bucket
+## 5️⃣ DB Backups and Static Content in S3 Bucket
 
-Static files such as logs and videos are stored in an Amazon S3 bucket for persistent and scalable storage.
+- RDS DB Snapshot backups to S3 bucket
+- Static files such as logs and videos are stored in an Amazon S3 bucket for persistent and scalable storage.
 
 ---
 
@@ -109,11 +110,19 @@ test/stress-vm-to-scale.sh
 
 📌 Uses the `stress` utility to artificially load CPU and trigger the `high-cpu-alarm`.
 
+```
+aws cloudwatch describe-alarm-history --alarm-name high-cpu-alarm --max-items 3
+```
+
 ---
 
 ## ✅ Outputs and Observability
 
 - Monitor scaling events via **CloudWatch Console**
+```
+aws cloudwatch describe-alarm-history --alarm-name high-cpu-alarm --max-items 3
+```
+
 - Check ASG and instance states in the **EC2 Auto Scaling section**
 - View logs on instances or in the associated **S3 bucket** (if configured)
 
