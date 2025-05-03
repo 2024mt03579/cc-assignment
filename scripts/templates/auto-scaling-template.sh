@@ -1,37 +1,44 @@
 #!/bin/bash
+
 # Update the system
 sudo apt update
-sudo apt install nginx -y
-sudo apt install python3.12-venv -y
+sudo apt install -y nginx python3.12-venv git mysql-client
+
+# Enable and start Nginx
 sudo systemctl enable nginx
 sudo systemctl start nginx
 
-# Set RDS DB Variables that will replaced by the autoscaling template
+# Set RDS DB Variables (inherited from launch template)
 export DB_ENDPOINT="$DB_ENDPOINT"
 export DB_PORT="$DB_PORT"
 export DB_NAME="$DB_NAME"
 export DB_USER="$DB_USER"
-export DB_PASSWORD="$DB_PASSWORD"
+export DB_PASSWORD='$DB_PASSWORD'
 
-# Clone your GitHub repository
-sudo cd $HOME
-sudo git clone -b initial-work-branch https://github.com/2024mt03579/cc-assignment.git
+# Clone the GitHub repo
+cd /home/ubuntu
+git clone https://github.com/2024mt03579/cc-assignment.git
 
-# Clear default Nginx page
+# Set up Nginx config
 sudo rm /etc/nginx/sites-enabled/default
-
-# Prepare custom site
-sudo cp $HOME/cc-assignment/webconf/nginx.conf /etc/nginx/sites-available/myflaskapp
+sudo cp /home/ubuntu/cc-assignment/webconf/nginx.conf /etc/nginx/sites-available/myflaskapp
 sudo ln -s /etc/nginx/sites-available/myflaskapp /etc/nginx/sites-enabled/
 
-# Install python app requirements
-sudo python3 -m venv venv
-sudo source venv/bin/activate 
-sudo pip install -r $HOME/cc-assignment/cc-flask-app/requirements.txt
+# Set up Python virtual environment (no sudo needed)
+cd /home/ubuntu
+python3 -m venv venv
+source venv/bin/activate
 
-# Start gunicorn service in the background
-sudo cd $HOME/cc-assignment/cc-flask-app 
-sudo gunicorn --bind 0.0.0.0:8000 app:app > gunicorn.log 2>&1 &
+# Install app requirements
+pip install --upgrade pip
+pip install -r /home/ubuntu/cc-assignment/cc-flask-app/requirements.txt
 
-# Restart nginx service
+# Install tables if they dont exist
+python3 init_db.py
+
+# Start Gunicorn in background
+cd /home/ubuntu/cc-assignment/cc-flask-app
+gunicorn --bind 0.0.0.0:8000 app:app > gunicorn.log 2>&1 &
+
+# Restart Nginx
 sudo systemctl restart nginx
