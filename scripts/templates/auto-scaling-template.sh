@@ -34,7 +34,7 @@ pip install --upgrade pip
 pip install -r /home/ubuntu/cc-assignment/cc-flask-app/requirements.txt
 
 # Install tables if they dont exist
-python3 init_db.py
+python3 /home/ubuntu/cc-assignment/cc-flask-app/init_db.py
 
 # Start Gunicorn in background
 cd /home/ubuntu/cc-assignment/cc-flask-app
