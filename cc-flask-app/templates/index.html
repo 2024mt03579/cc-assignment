@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Cloud Auto-Scaling App</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <header>
@@ -18,13 +18,13 @@
 
   <section id="contact">
     <h2>Contact Us</h2>
-    <form id="contactForm">
-      <input type="text" placeholder="Your Name" required>
-      <input type="email" placeholder="Your Email" required>
-      <textarea placeholder="Your Message"></textarea>
+    <form id="contactForm" action="/contact" method="POST">
+      <input type="text" name="name" placeholder="Your Name" required>
+      <input type="email" name="email" placeholder="Your Email" required>
+      <textarea name="message" placeholder="Your Message" required></textarea>
       <button type="submit">Send</button>
     </form>
-  </section>
+  </section>  
 
   <footer>
     <p>© 2025 CloudApp Inc.</p>
