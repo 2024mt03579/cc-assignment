@@ -23,16 +23,9 @@ export DB_PASSWORD=$(cat .db-config | grep db_password | awk -F "=" '{print $2}'
 
 # === END OF CONFIGURATION ===
 
-# --- 1. Fetch Latest Ubuntu 22.04 AMI ID ---
-echo "Fetching latest Ubuntu 22.04 LTS AMI ID..."
-AMI_ID=$(aws ec2 describe-images \
-  --owners 099720109477 \
-  --filters "Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*" \
-            "Name=state,Values=available" \
-  --query 'Images | sort_by(@, &CreationDate)[-1].ImageId' \
-  --region "$REGION" \
-  --output text)
-echo "Using AMI ID: $AMI_ID"
+# --- 1. Fetch Latest Ubuntu 24.04 AMI ID ---
+echo "Fetching latest Ubuntu 24.04 LTS AMI ID..."
+AMI_ID="ami-084568db4383264d4"
 
 # --- 6. Fetch User-Data from GitHub ---
 echo "Fetching User Data from GitHub..."
