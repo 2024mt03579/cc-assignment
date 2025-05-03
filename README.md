@@ -93,9 +93,10 @@ This will:
 
 ---
 
-## 5️⃣ Static Content in S3 Bucket
+## 5️⃣ DB Backups and Static Content in S3 Bucket
 
-Static files such as logs and videos are stored in an Amazon S3 bucket for persistent and scalable storage.
+- RDS DB Snapshot backups to S3 bucket
+- Static files such as logs and videos are stored in an Amazon S3 bucket for persistent and scalable storage.
 
 ---
 
