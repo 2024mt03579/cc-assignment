@@ -7,11 +7,11 @@ sudo systemctl enable nginx
 sudo systemctl start nginx
 
 # Set RDS DB Variables that will replaced by the autoscaling template
-export DB_HOST="{{DB_ENDPOINT}}"
-export DB_PORT="{{DB_PORT}}"
-export DB_NAME="{{DB_NAME}}"
-export DB_USER="{{DB_USER}}"
-export DB_PASSWORD="{{DB_PASSWORD}}"
+export DB_ENDPOINT="$DB_ENDPOINT"
+export DB_PORT="$DB_PORT"
+export DB_NAME="$DB_NAME"
+export DB_USER="$DB_USER"
+export DB_PASSWORD="$DB_PASSWORD"
 
 # Clone your GitHub repository
 sudo cd $HOME

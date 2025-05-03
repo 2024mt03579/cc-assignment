@@ -6,12 +6,13 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'a-very-strong-secret-key')
 
 # Database configuration (for RDS, using PyMySQL)
-DB_HOST = os.getenv('DB_HOST', 'localhost')
-DB_USER = os.getenv('DB_USER', 'root')
+DB_HOST = os.getenv('DB_ENDPOINT', 'localhost')
+DB_USER = os.getenv('DB_USER', 'admin')
 DB_PASSWORD = os.getenv('DB_PASSWORD', 'my-secret-password')
 DB_NAME = os.getenv('DB_NAME', 'cc_db')
+DB_PORT = int(os.getenv('DB_PORT', '3306'))
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
