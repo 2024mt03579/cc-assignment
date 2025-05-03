@@ -2,22 +2,36 @@
 # Update the system
 sudo apt update
 sudo apt install nginx -y
-sudo systemctl start nginx
+sudo apt install python3.12-venv -y
 sudo systemctl enable nginx
+sudo systemctl start nginx
 
-# Clear default Nginx page
-rm -rf /var/www/html/*
+# Set RDS DB Variables that will replaced by the autoscaling template
+export DB_HOST="{{DB_ENDPOINT}}"
+export DB_PORT="{{DB_PORT}}"
+export DB_NAME="{{DB_NAME}}"
+export DB_USER="{{DB_USER}}"
+export DB_PASSWORD="{{DB_PASSWORD}}"
 
 # Clone your GitHub repository
-cd /tmp
-git clone https://github.com/2024mt03579/cc-assignment.git
+sudo cd $HOME
+sudo git clone -b initial-work-branch https://github.com/2024mt03579/cc-assignment.git
 
-# Copy website files to Nginx web root
-cp -r cc-assignment/static-web-files/* /var/www/html/
+# Clear default Nginx page
+sudo rm /etc/nginx/sites-enabled/default
 
-# Set correct permissions
-chown -R www-data:www-data /var/www/html
-chmod -R 755 /var/www/html
+# Prepare custom site
+sudo cp $HOME/cc-assignment/webconf/nginx.conf /etc/nginx/sites-available/myflaskapp
+sudo ln -s /etc/nginx/sites-available/myflaskapp /etc/nginx/sites-enabled/
 
-# Restart Nginx
-systemctl restart nginx
+# Install python app requirements
+sudo python3 -m venv venv
+sudo source venv/bin/activate 
+sudo pip install -r $HOME/cc-assignment/cc-flask-app/requirements.txt
+
+# Start gunicorn service in the background
+sudo cd $HOME/cc-assignment/cc-flask-app 
+sudo gunicorn --bind 0.0.0.0:8000 app:app > gunicorn.log 2>&1 &
+
+# Restart nginx service
+sudo systemctl restart nginx

@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Variables
-DB_INSTANCE_IDENTIFIER="cc-assignment-rds"
-DB_NAME="${1}"
-DB_USER="${2}"
+DB_INSTANCE_IDENTIFIER="ccassignmentrds"
+DB_NAME=$1
+DB_USER=$2
 #Looking for DB_PASSWORD in the environment variable
 if [ -z $DB_PASSWORD ];then
   echo "export DB_PASSWORD variable before running the script"
@@ -12,15 +12,21 @@ fi
 DB_INSTANCE_CLASS="db.t3.micro"
 DB_ENGINE="mysql"
 DB_ENGINE_VERSION="8.0.35"
-ALLOCATED_STORAGE=20                 # in GB
-REGION="${3}"
-VPC_SECURITY_GROUP_ID=$(cat .runner-config | grep sg | awk -F "=" '{print $2}')
-SUBNET_GROUP_NAME=$(cat .runner-config | grep db_subnet_group | awk -F "=" '{print $2}')
+ALLOCATED_STORAGE=20 # in GB
+REGION=$3
+VPC_SECURITY_GROUP_ID=$(cat .runner-config | grep sg | awk -F "=" '{print $2}' | xargs)
+SUBNET_GROUP_NAME=$(cat .runner-config | grep db_subnet_group | awk -F "=" '{print $2}' | xargs)
 
-if [ $# -lt 4 ];then
+if [ $# -lt 3 ];then
   echo "usage: $0 <db-name> <db-user> <db-region>"
   exit 1
 fi
+
+echo $SUBNET_GROUP_NAME
+
+aws rds describe-db-subnet-groups \
+  --db-subnet-group-name "${SUBNET_GROUP_NAME}" \
+  --region "$REGION"
 
 # Create the RDS instance
 aws rds create-db-instance \
@@ -35,7 +41,8 @@ aws rds create-db-instance \
   --vpc-security-group-ids $VPC_SECURITY_GROUP_ID \
   --db-subnet-group-name $SUBNET_GROUP_NAME \
   --publicly-accessible \
-  --region $REGION
+  --region $REGION \
+  --no-cli-pager
 
 # Wait for DB to be available
 echo "Waiting for RDS instance to become available..."
